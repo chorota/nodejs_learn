@@ -1,3 +1,6 @@
+//memo
+//分割代入:https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment
+//
 const PORT = process.env.PORT;
 const express = require("express");
 const favicon = require("serve-favicon");
@@ -22,36 +25,16 @@ app.use(acceslogger());
 // Dynamic resource routing
 app.use("/",require("./routes/index.js"));
 app.use("/test", async(req,res,next) => {
-  const {promisify} = require("util");
-  const path = require("path");
-  const { sql } = require("@garafu/mysql-fileloader")( { root: path.join(__dirname, "./lib/database/sql") });
-  const config = require("./config/mysql.config.js");
-  
-  const mysql = require("mysql");
-  const con = mysql.createConnection({
-    host: config.HOST,
-    port: config.PORT,
-    user: config.USERNAME,
-    password: config.PASSWORD,
-    database: config.DATABASE
-  });
-
-  const client = {
-    connect: promisify(con.connect).bind(con),
-    query: promisify(con.query).bind(con),
-    end: promisify(con.end).bind(con),
-  };
-
+  const { MySQLClient , sql } = require("./lib/database/client.js");
   var data;
 
   try{
-    await client.connect();
-    data = await client.query(await sql("SELECT_SHOP_BASIC_BY_ID"));
+    data = await MySQLClient.executeQuery(await sql("SELECT_SHOP_BASIC_BY_ID"),  [1]  );
     console.log(data);
   }catch(err){
     next(err);
   }finally{
-    await client.end();
+    await MySQLClient.end();
   }
 
   res.end("OK");
